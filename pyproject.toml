@@ -1,6 +1,6 @@
 [project]
 name = "unitelabs-sainsmart-relay-sila"
-version = "0.1.0"
+version = "0.1.1"
 description = "A SiLA 2 connector for the SainSmart USB relay (CH340, Modbus ASCII)"
 readme = "README.md"
 authors = [{name = "Acceleration Consortium", email = "developers@accelerationconsortium.ca"},]

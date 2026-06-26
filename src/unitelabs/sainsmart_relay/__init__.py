@@ -5,6 +5,7 @@ from importlib.metadata import version
 
 from unitelabs.cdk import Connector, ConnectorBaseConfig, SiLAServerConfig
 
+from ._env import apply_env_overrides, configure_log_level
 from .features import RelayControlFeature
 from .io import SainsmartRelay, SimulatedRelay
 from .metrics import RelayMetrics, start_metrics_server
@@ -62,6 +63,8 @@ async def create_app(
     config: SainsmartRelaySilaConfig,
 ) -> collections.abc.AsyncGenerator[Connector, None]:
     """Create the connector application: wire the relay controller + SiLA feature + metrics."""
+    configure_log_level()
+    apply_env_overrides(config)  # RELAY_*/LOG_LEVEL overrides for Nomad raw_exec deploys
     log.info(
         "Starting SainSmart Relay connector v%s (simulator=%s, port=%s, channels=%d)",
         __version__,

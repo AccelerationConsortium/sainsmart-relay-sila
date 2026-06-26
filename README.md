@@ -53,6 +53,16 @@ With no config file present the connector boots with these defaults
 (`use_simulator=true`) - this is exactly what the CI simulator-boot smoke test
 exercises against the frozen `.exe`.
 
+**Env-var overrides (for Nomad `raw_exec`):** the frozen exe runs
+`unitelabs.cdk.run(create_app)`, which validates config from defaults only, so
+deploys configure it via env vars (applied in `create_app`, mirroring the BLE
+forwarder): `RELAY_USE_SIMULATOR`, `RELAY_SERIAL_PORT` (empty = auto-detect),
+`RELAY_USB_VID_PID`, `RELAY_USB_SERIAL_NUMBER`, `RELAY_NUM_CHANNELS`,
+`RELAY_METRICS_ENABLED`, `RELAY_METRICS_PORT`, `RELAY_UUID` (must be a valid
+UUID; pins the SiLA server identity per deployment), `RELAY_SILA_PORT`,
+`RELAY_SILA_HOSTNAME`, and `LOG_LEVEL`. Overrides preserve the connector's
+name/type/version on `sila_server`.
+
 ### Metrics
 
 `relay_active_channel`, `relay_channel_state{channel}`, `relay_switches_total{channel}`,
