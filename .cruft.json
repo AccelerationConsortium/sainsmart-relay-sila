@@ -1,0 +1,31 @@
+{
+  "template": "https://gitlab.com/unitelabs/cdk/connector-factory.git",
+  "commit": "2ad467dac172322657f5498bf4d08e73480d3eb4",
+  "checkout": null,
+  "context": {
+    "cookiecutter": {
+      "connector_name": "SainSmart Relay",
+      "project_name": "sainsmart-relay-sila",
+      "package_name": "sainsmart_relay",
+      "__package_import_name": "unitelabs.sainsmart_relay",
+      "__protocol_name": "SainsmartRelaySila",
+      "project_description": "A SiLA 2 connector for the SainSmart USB relay (CH340, Modbus ASCII)",
+      "author_full_name": "Acceleration Consortium",
+      "author_email": "developers@accelerationconsortium.ca",
+      "project_repo": "https://github.com/AccelerationConsortium/sainsmart-relay-sila",
+      "communication_type": "serial",
+      "env": "uv",
+      "_render_devdocs": false,
+      "_jinja2_env_vars": {
+        "lstrip_blocks": true,
+        "trim_blocks": true
+      },
+      "_extensions": [
+        "internal_ext.IsInternalExtension"
+      ],
+      "_template": "https://gitlab.com/unitelabs/cdk/connector-factory.git",
+      "_commit": "2ad467dac172322657f5498bf4d08e73480d3eb4"
+    }
+  },
+  "directory": null
+}
