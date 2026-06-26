@@ -74,31 +74,42 @@ jobs:
         run: |
           $exe = "dist/relay-connector.exe"
           if (-not (Test-Path $exe)) { throw "Build did not produce $exe" }
+          # Use 127.0.0.1 (not localhost): the server binds IPv4 0.0.0.0, and on
+          # Windows "localhost" can resolve to IPv6 ::1 first.
           $proc = Start-Process -FilePath $exe -PassThru `
             -RedirectStandardOutput boot.out.log -RedirectStandardError boot.err.log
-          try {
-            $ok = $false
-            foreach ($i in 1..30) {
+          $metrics = $null
+          $silaUp = $false
+          # --onefile cold start unpacks to %TEMP% then imports grpc/cdk; allow generous time.
+          # All live probes happen here, while the process is still running.
+          foreach ($i in 1..90) {
+            if ($proc.HasExited) { break }
+            if ($null -eq $metrics) {
               try {
-                Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 http://localhost:9110/metrics | Out-Null
-                $ok = $true
-                break
-              } catch { Start-Sleep -Seconds 1 }
+                $metrics = (Invoke-WebRequest -UseBasicParsing -TimeoutSec 2 http://127.0.0.1:9110/metrics).Content
+              } catch { }
             }
-            if (-not $ok) {
-              Write-Host "--- stdout ---"; Get-Content boot.out.log -ErrorAction SilentlyContinue
-              Write-Host "--- stderr ---"; Get-Content boot.err.log -ErrorAction SilentlyContinue
-              throw "relay-connector.exe did not serve /metrics within 30s"
+            if ($metrics -ne $null -and -not $silaUp) {
+              # The SiLA gRPC server starts just after create_app yields.
+              $r = Test-NetConnection -ComputerName 127.0.0.1 -Port 50051 -WarningAction SilentlyContinue
+              if ($r.TcpTestSucceeded) { $silaUp = $true }
             }
-            $metrics = (Invoke-WebRequest -UseBasicParsing http://localhost:9110/metrics).Content
-            if ($metrics -notmatch "sila_server_info") { throw "sila_server_info metric missing" }
-            if ($metrics -notmatch "relay_active_channel") { throw "relay_active_channel metric missing" }
-            $sila = Test-NetConnection -ComputerName localhost -Port 50051 -WarningAction SilentlyContinue
-            if (-not $sila.TcpTestSucceeded) { throw "SiLA gRPC port 50051 not listening" }
-            Write-Host "Smoke test passed: exe booted, /metrics + SiLA 50051 reachable."
-          } finally {
-            Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+            if ($metrics -ne $null -and $silaUp) { break }
+            Start-Sleep -Seconds 1
           }
+          $exited = $proc.HasExited
+          $code = if ($exited) { $proc.ExitCode } else { "n/a" }
+          Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+          Start-Sleep -Seconds 1  # let redirected log handles flush/release
+          if ($null -eq $metrics -or -not $silaUp) {
+            Write-Host "HasExited=$exited ExitCode=$code metricsServed=$($metrics -ne $null) silaUp=$silaUp"
+            Write-Host "--- stdout ---"; Get-Content boot.out.log -ErrorAction SilentlyContinue
+            Write-Host "--- stderr ---"; Get-Content boot.err.log -ErrorAction SilentlyContinue
+            throw "relay-connector.exe did not fully boot (metrics 9110 + SiLA 50051) within 90s"
+          }
+          if ($metrics -notmatch "sila_server_info") { throw "sila_server_info metric missing" }
+          if ($metrics -notmatch "relay_active_channel") { throw "relay_active_channel metric missing" }
+          Write-Host "Smoke test passed: exe booted in simulator mode; /metrics + SiLA 50051 reachable."
 
       - name: Compute checksum
         shell: pwsh
