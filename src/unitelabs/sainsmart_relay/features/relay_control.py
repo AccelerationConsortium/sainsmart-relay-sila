@@ -48,6 +48,9 @@ class RelayControlFeature(sila.Feature):
         Deactivate the currently-active channel and activate `channel` (no-op if already active).
 
         This is the core operation - it guarantees only one channel is ever closed.
+
+        Returns:
+            active_channel: The channel the signal is now routed to.
         """
         with self._metrics.time_command("switch"):
             await self._relay.switch_to_channel(channel)
@@ -56,7 +59,12 @@ class RelayControlFeature(sila.Feature):
 
     @sila.UnobservableCommand(errors=[RelayCommunicationError, ChannelOutOfRange])
     async def set_channel(self, channel: Channel, closed: bool) -> ChannelState:
-        """Set a single channel open/closed directly (does not deactivate others)."""
+        """
+        Set a single channel open/closed directly (does not deactivate others).
+
+        Returns:
+            channel_state: The resulting state of the addressed channel.
+        """
         with self._metrics.time_command("set"):
             await self._relay.set_channel(channel, closed)
         self._metrics.on_set(self._relay.channel_states())
@@ -71,7 +79,12 @@ class RelayControlFeature(sila.Feature):
 
     @sila.UnobservableCommand(errors=[RelayCommunicationError])
     async def get_channel_states(self) -> list[ChannelState]:
-        """Return the state of every channel (connector-tracked; authoritative - sole owner)."""
+        """
+        Return the state of every channel (connector-tracked; authoritative - sole owner).
+
+        Returns:
+            channel_states: The state of every channel on the device.
+        """
         return [ChannelState(channel=i, closed=on) for i, on in enumerate(self._relay.channel_states())]
 
     @sila.UnobservableProperty()
