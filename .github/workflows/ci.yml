@@ -67,7 +67,7 @@ jobs:
           --copy-metadata grpcio
           --copy-metadata unitelabs-cdk
           --copy-metadata pyserial
-          packaging/relay_forwarder.py
+          packaging/relay_connector.py
 
       - name: Smoke test - frozen exe boots in simulator mode
         shell: pwsh
